@@ -139,17 +139,6 @@ i2c_err_t TwoWire::readTransmission(uint16_t address, uint8_t *buff, uint16_t si
     return last_error;
 }
 
-void TwoWire::flush(void)
-{
-    rxIndex = 0;
-    rxLength = 0;
-    txIndex = 0;
-    txLength = 0;
-    rxQueued = 0;
-    txQueued = 0;
-    i2cFlush(i2c); // cleanup
-}
-
 void TwoWire::beginTransmission(uint16_t address)
 {
     transmitting = 1;
@@ -259,6 +248,17 @@ int TwoWire::peek(void)
         value = rxBuffer[rxIndex];
     }
     return value;
+}
+
+void TwoWire::flush(void)
+{
+    rxIndex = 0;
+    rxLength = 0;
+    txIndex = 0;
+    txLength = 0;
+    rxQueued = 0;
+    txQueued = 0;
+    i2cFlush(i2c); // cleanup
 }
 
 uint8_t TwoWire::requestFrom(uint8_t address, uint8_t quantity, uint8_t sendStop)
