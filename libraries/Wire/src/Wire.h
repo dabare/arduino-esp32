@@ -55,12 +55,12 @@ protected:
     uint16_t txQueued; //@stickbreaker
 
     uint8_t transmitting;
-/* slave Mode, not yet Stickbreaker
-		static user_onRequest uReq[2];
-		static user_onReceive uRcv[2];
-    void onRequestService(void);
-    void onReceiveService(uint8_t*, int);
-*/
+    /* slave Mode, not yet Stickbreaker
+    		static user_onRequest uReq[2];
+    		static user_onReceive uRcv[2];
+        void onRequestService(void);
+        void onReceiveService(uint8_t*, int);
+    */
     i2c_err_t last_error; // @stickBreaker from esp32-hal-i2c.h
     i2c_err_t processQueue(uint32_t *readCount);
     uint16_t _timeOutMillis;
@@ -70,44 +70,37 @@ protected:
 public:
     TwoWire(uint8_t bus_num);
     ~TwoWire();
-    void begin(int sda=-1, int scl=-1, uint32_t frequency=0); 
-       //defaults bus:0 sda=SDA, scl=SCL, frequency =100khz via variant pins_arduino.h
-       // bus:1 unspecified, emits Log_E()
-    void setClock(uint32_t); // change bus clock without initing hardware
-    void beginTransmission(uint16_t);
-    uint8_t endTransmission(bool);
-		uint8_t	requestFrom(uint16_t address, uint8_t size, bool sendStop);
-//@stickBreaker for big blocks and ISR model
-    i2c_err_t writeTransmission(uint16_t address, uint8_t* buff, uint16_t size, bool sendStop=true);
-    i2c_err_t readTransmission(uint16_t address, uint8_t* buff, uint16_t size, bool sendStop=true);
-		uint16_t 	requestFrom(uint16_t address, uint8_t* buf, uint16_t size, bool sendStop);
-		uint8_t	transact(uint8_t readLen);
-    uint16_t transact(uint8_t* readBuff, uint16_t readLen);
-		uint8_t	lastError();
-    char * getErrorText(uint8_t err);
-    void dumpOn(){_dump=true;}
-    void dumpOff(){_dump=false;}
-    bool getDump(){return _dump;}
-    void dumpInts();
-    void dumpI2C(){i2cDumpI2c(i2c);}
+    void begin(int sda=-1, int scl=-1, uint32_t frequency=0);
+
+    void setClock(uint32_t frequency); // change bus clock without initing hardware
     size_t getClock(); // current bus clock rate in hz
+
     void setTimeOut(uint16_t timeOutMillis);
     uint16_t getTimeOut();
-//		
-    void beginTransmission(uint8_t);
-    void beginTransmission(int);
-    uint8_t endTransmission(void);
-    uint8_t endTransmission(uint8_t);
-    uint8_t requestFrom(uint8_t, uint8_t);
-    uint8_t requestFrom(uint8_t, uint8_t, uint8_t);
-    uint8_t requestFrom(uint16_t, uint8_t, uint8_t);
-    uint8_t requestFrom(int, int);
-    uint8_t requestFrom(int, int, int);
-		uint8_t requestFrom(uint16_t, uint8_t);
-    
-    void onReceive( void (*)(int) );
-    void onRequest( void (*)(void) );
 
+    uint8_t lastError();
+    char * getErrorText(uint8_t err);
+
+    //@stickBreaker for big blocks and ISR model
+    i2c_err_t writeTransmission(uint16_t address, uint8_t* buff, uint16_t size, bool sendStop=true);
+    i2c_err_t readTransmission(uint16_t address, uint8_t* buff, uint16_t size, bool sendStop=true);
+    uint16_t  requestFrom(uint16_t address, uint8_t* buf, uint16_t size, bool sendStop);
+
+    void beginTransmission(uint16_t address);
+    void beginTransmission(uint8_t address);
+    void beginTransmission(int address);
+
+    uint8_t endTransmission(bool sendStop);
+    uint8_t endTransmission(uint8_t sendStop);
+    uint8_t endTransmission(void);
+
+    uint8_t requestFrom(uint16_t address, uint8_t size, bool sendStop);
+    uint8_t requestFrom(uint16_t address, uint8_t size, uint8_t sendStop);
+    uint8_t requestFrom(uint16_t address, uint8_t size);
+    uint8_t requestFrom(uint8_t address, uint8_t size, uint8_t sendStop);
+    uint8_t requestFrom(uint8_t address, uint8_t size);
+    uint8_t requestFrom(int address, int size, int sendStop);
+    uint8_t requestFrom(int address, int size);
 
     size_t write(uint8_t);
     size_t write(const uint8_t *, size_t);
@@ -136,6 +129,31 @@ public:
     {
         return write((uint8_t)n);
     }
+
+    void onReceive( void (*)(int) );
+    void onRequest( void (*)(void) );
+
+    uint8_t transact(uint8_t readLen);
+    uint16_t transact(uint8_t* readBuff, uint16_t readLen);
+
+    void dumpOn()
+    {
+        _dump=true;
+    }
+    void dumpOff()
+    {
+        _dump=false;
+    }
+    bool getDump()
+    {
+        return _dump;
+    }
+    void dumpInts();
+    void dumpI2C()
+    {
+        i2cDumpI2c(i2c);
+    }
+
 };
 
 extern TwoWire Wire;
