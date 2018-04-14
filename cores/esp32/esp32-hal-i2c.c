@@ -72,8 +72,8 @@ static i2c_t _i2c_bus_array[2] = {
 #define I2C_MUTEX_UNLOCK()  xSemaphoreGive(i2c->lock)
 
 static i2c_t _i2c_bus_array[2] = {
-    {(volatile i2c_dev_t *)(DR_REG_I2C_EXT_BASE_FIXED), NULL, 0,I2C_NONE,I2C_NONE,I2C_ERROR_OK,NULL,NULL,NULL,0,0,0},
-    {(volatile i2c_dev_t *)(DR_REG_I2C1_EXT_BASE_FIXED), NULL, 1,I2C_NONE,I2C_NONE,I2C_ERROR_OK,NULL,NULL,NULL,0,0,0}
+    {(volatile i2c_dev_t *)(DR_REG_I2C_EXT_BASE_FIXED), NULL, 0,I2C_NONE,I2C_NONE,I2C_ERROR_OK,NULL,NULL,NULL,0,0,0,0},
+    {(volatile i2c_dev_t *)(DR_REG_I2C1_EXT_BASE_FIXED), NULL, 1,I2C_NONE,I2C_NONE,I2C_ERROR_OK,NULL,NULL,NULL,0,0,0,0}
 };
 #endif
 
@@ -254,6 +254,16 @@ void i2cResetFiFo(i2c_t * i2c)
   i2c->dev->fifo_conf.val = f.val;
 }
 
+void i2cReleaseISR(i2c_t * i2c){
+if(i2c->intr_handle){
+    //log_i("Release ISR %d",i2c->num);
+    //esp_err_t error =
+    esp_intr_free(i2c->intr_handle);
+    //log_e("released ISR=%d",error);
+    i2c->intr_handle=NULL;
+  }
+}
+
 i2c_err_t i2cSetFrequency(i2c_t * i2c, uint32_t clk_speed)
 {
     if(i2c == NULL){
@@ -379,6 +389,7 @@ void i2cInitFix(i2c_t * i2c){
     while ((!i2c->dev->command[2].done) && (--count > 0));
     I2C_MUTEX_UNLOCK();
 }
+*/
 /* 
  unused 03/15/2018
 void i2cReset(i2c_t* i2c){
@@ -820,7 +831,7 @@ static void IRAM_ATTR i2c_isr_handler_default(void* arg){
 i2c_t* p_i2c = (i2c_t*) arg; // recover data
 uint32_t activeInt = p_i2c->dev->int_status.val&0x1FFF;
  
-portBASE_TYPE HPTaskAwoken = pdFALSE,xResult; 
+//portBASE_TYPE HPTaskAwoken = pdFALSE,xResult;
 
 if(p_i2c->stage==I2C_DONE){ //get Out
   log_e("eject int=%p, ena=%p",activeInt,p_i2c->dev->int_ena.val);
@@ -843,7 +854,7 @@ while (activeInt != 0) { // Ordering of 'if(activeInt)' statements is important,
   intBuff[intPos[p_i2c->num]][2][p_i2c->num] = xTaskGetTickCountFromISR(); // when IRQ fired
  
 #endif
-  uint32_t oldInt =activeInt;
+  //uint32_t oldInt =activeInt;
 
   if (activeInt & I2C_TRANS_START_INT_ST_M) {
  //   p_i2c->byteCnt=0;
@@ -1016,7 +1027,7 @@ if(!i2c->i2c_event){
   i2c->i2c_event = xEventGroupCreate();
   }
 if(i2c->i2c_event) {
-  uint32_t ret=xEventGroupClearBits(i2c->i2c_event, 0xFF);
+  xEventGroupClearBits(i2c->i2c_event, 0xFF);
   }
 else {// failed to create EventGroup
   log_e("eventCreate failed=%p",i2c->i2c_event);
@@ -1094,7 +1105,7 @@ i2c->dev->int_ena.val =
 
 if(!i2c->intr_handle){ // create ISR for either peripheral 
  // log_i("create ISR %d",i2c->num);
-  uint32_t ret;
+  uint32_t ret = 0;
   switch(i2c->num){
     case 0:
       ret = esp_intr_alloc(ETS_I2C_EXT0_INTR_SOURCE, 0, &i2c_isr_handler_default, i2c, &i2c->intr_handle);
@@ -1236,15 +1247,6 @@ while(b < i2c->queueCount){
 
 I2C_MUTEX_UNLOCK();
 return reason;
-}
-
-void i2cReleaseISR(i2c_t * i2c){
-if(i2c->intr_handle){
-//  log_i("Release ISR %d",i2c->num);
-  esp_err_t error =esp_intr_free(i2c->intr_handle);
-//  log_e("released ISR=%d",error);
-  i2c->intr_handle=NULL;
-  }
 }
 
 void i2cReleaseAll(i2c_t *i2c){ // release all resources, power down peripheral
