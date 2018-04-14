@@ -218,8 +218,9 @@ size_t TwoWire::write(uint8_t data)
         txBuffer[txIndex] = data;
         ++txIndex;
         txLength = txIndex;
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 size_t TwoWire::write(const uint8_t *data, size_t quantity)
@@ -230,8 +231,9 @@ size_t TwoWire::write(const uint8_t *data, size_t quantity)
                 return i;
             }
         }
+        return quantity;
     }
-    return quantity;
+    return 0;
 }
 
 int TwoWire::available(void)
